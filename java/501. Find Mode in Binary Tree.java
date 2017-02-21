@@ -1,46 +1,70 @@
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode(int x) { val = x; }
+ * }
+ */
 public class Solution {
-    public int[] findMode(TreeNode root) {
-        HashMap<Integer, Integer> count = new HashMap<Integer, Integer>();
+    private int curVal = 0;
+    private int curCount = 0;
+    private int maxCount = 0;
 
-        Stack<TreeNode> nodeStack = new Stack<TreeNode>();
-        nodeStack.push(root);
+    private int[] modes;
+    private int modeCount = 0;
 
-        while (!nodeStack.empty()) {
-            TreeNode curNode = nodeStack.pop();
-            int val = curNode.val;
-            if (count.containsKey(val)) {
-                count.put(val, count.get(val) + 1);
+
+    private void handleNode(int val) {
+        if (curVal != val) {
+            curVal = val;
+            curCount = 0;
+        }
+        curCount++;
+        if (curCount > maxCount) {
+            maxCount = curCount;
+            modeCount = 1;
+        }
+        else if (curCount == maxCount) {
+            if (modes != null) {
+                modes[modeCount] = curVal;
+            }
+            modeCount++;
+        }
+    }
+
+    private void inorder(TreeNode root) {
+        // morris traversal
+        TreeNode curNode = root;
+        while (curNode != null) {
+            if (curNode.left == null) {
+                handleNode(curNode.val);
+                curNode = curNode.right;
             }
             else {
-                count.put(val, 1);
-            }
-            if (curNode.left != null) {
-                nodeStack.add(curNode.left);
-            }
-            if (curNode.right != null) {
-                nodeStack.add(curNode.right);
-            }
-        }
-
-        int max = Integer.MIN_VALUE;
-
-        for (int counting: count.values()) {
-            if (counting > max) {
-                max = counting;
+                TreeNode pre = curNode.left;
+                while (pre.right != null && pre.right != curNode)
+                    pre = pre.right;
+                if (pre.right == null) {
+                    pre.right = curNode;
+                    curNode = curNode.left;
+                }
+                else {
+                    pre.right = null;
+                    handleNode(curNode.val);
+                    curNode = curNode.right;
+                }
             }
         }
-
-        List<Integer> result = new ArrayList<Integer>();
-        for (int key: count.keySet()) {
-            if (count.get(key) == max) {
-                result.add(key);
-            }
-        }
-        int[] resultArray = new int[result.size()];
-        int index = 0;
-        for (int val: result) {
-            resultArray[index++] = val;
-        }
-        return resultArray;
+    }
+    public int[] findMode(TreeNode root) {
+        inorder(root);
+        modes = new int[modeCount];
+        modeCount = 0;
+        curCount = 0;
+        inorder(root);
+        
+        return modes;
     }
 }
